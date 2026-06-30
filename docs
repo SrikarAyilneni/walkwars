@@ -1,0 +1,339 @@
+# WalkWars — User Stories
+
+**Version:** 1.0  
+**Format:** Epic → User Story → Acceptance Criteria
+
+Priority: **P0** = Phase 1 MVP, **P1** = Phase 1 nice-to-have, **P2** = Phase 2
+
+---
+
+## Epic 1: Authentication
+
+### US-1.1 Register account (P0)
+
+**As a** new user  
+**I want to** create an account with username, email, and password  
+**So that** I can track walks and compete on the leaderboard
+
+**Acceptance criteria:**
+
+- [ ] Registration form validates username (3–50 chars), email format, password (min 8 chars)
+- [ ] Duplicate username or email returns clear error
+- [ ] Password stored as BCrypt hash (never plaintext)
+- [ ] Successful registration redirects to login
+- [ ] API: `POST /api/auth/register` returns 201
+
+---
+
+### US-1.2 Login (P0)
+
+**As a** registered user  
+**I want to** log in with my credentials  
+**So that** I can access protected features
+
+**Acceptance criteria:**
+
+- [ ] Valid credentials return JWT token
+- [ ] Invalid credentials return 401 with generic message (no user enumeration)
+- [ ] Token stored in localStorage and attached to API requests
+- [ ] Session persists across browser refresh until logout or expiry
+
+---
+
+### US-1.3 Logout (P0)
+
+**As a** logged-in user  
+**I want to** log out  
+**So that** others cannot use my session on a shared device
+
+**Acceptance criteria:**
+
+- [ ] Logout clears token from storage
+- [ ] User redirected to landing or login page
+- [ ] Protected routes inaccessible after logout
+
+---
+
+### US-1.4 Protected routes (P0)
+
+**As a** developer  
+**I want** unauthenticated users blocked from app pages  
+**So that** walk data remains private
+
+**Acceptance criteria:**
+
+- [ ] `/dashboard`, `/walk`, `/walks`, `/leaderboard`, `/profile` require JWT
+- [ ] Missing token redirects to `/login`
+- [ ] API returns 401 for missing/invalid JWT
+
+---
+
+## Epic 2: GPS walk tracking
+
+### US-2.1 Start walk (P0)
+
+**As a** walker  
+**I want to** start a walk session  
+**So that** the app begins recording my route
+
+**Acceptance criteria:**
+
+- [ ] "Start Walk" button on tracking page creates ACTIVE walk via API
+- [ ] Browser requests geolocation permission if not granted
+- [ ] Clear message if permission denied
+- [ ] Only one active walk per user (409 if second start attempted)
+
+---
+
+### US-2.2 Record GPS points (P0)
+
+**As a** walker  
+**I want** my location recorded periodically during a walk  
+**So that** my route is accurate
+
+**Acceptance criteria:**
+
+- [ ] Points collected every ~5 seconds while walk active
+- [ ] Each point sent: lat, lng, timestamp, sequenceNumber
+- [ ] Points stored with PostGIS `geom` POINT (EPSG:4326) — *Survey_Map pattern*
+- [ ] Live polyline updates on map as points arrive
+- [ ] Minimum movement filter optional (skip if < 5 m from last point)
+
+---
+
+### US-2.3 End walk (P0)
+
+**As a** walker  
+**I want to** stop my walk session  
+**So that** my route is saved and stats computed
+
+**Acceptance criteria:**
+
+- [ ] "Stop Walk" ends session via API
+- [ ] Server builds LINESTRING from points using `fn_build_walk_path`
+- [ ] Distance computed server-side (`ST_Length` on geography) — not client Haversine
+- [ ] Walk status becomes COMPLETED
+- [ ] User navigated to walk detail page
+- [ ] Walk rejected if fewer than 2 points
+
+---
+
+### US-2.4 Live walk stats (P1)
+
+**As a** walker  
+**I want to** see elapsed time and estimated distance during a walk  
+**So that** I stay motivated
+
+**Acceptance criteria:**
+
+- [ ] Timer shows elapsed duration
+- [ ] Distance shows client Haversine estimate labeled as approximate
+- [ ] Final distance on detail page matches server value
+
+---
+
+## Epic 3: Route visualization
+
+### US-3.1 View walk on map (P0)
+
+**As a** user  
+**I want to** see my completed walk on an OpenStreetMap  
+**So that** I can review where I went
+
+**Acceptance criteria:**
+
+- [ ] Walk detail page shows Leaflet map with OSM tiles
+- [ ] Route displayed as blue polyline
+- [ ] Map zooms to fit route bounds
+- [ ] GeoJSON path converted correctly [lng,lat] → [lat,lng]
+
+---
+
+### US-3.2 Walk statistics display (P0)
+
+**As a** user  
+**I want to** see distance, duration, and date for each walk  
+**So that** I understand my activity
+
+**Acceptance criteria:**
+
+- [ ] Distance formatted (e.g., "3.2 km")
+- [ ] Duration formatted (e.g., "45 min")
+- [ ] Start date/time displayed in local timezone
+
+---
+
+## Epic 4: Dashboard and history
+
+### US-4.1 Personal dashboard (P0)
+
+**As a** user  
+**I want a** dashboard with my overall stats  
+**So that** I see my walking progress at a glance
+
+**Acceptance criteria:**
+
+- [ ] Shows total distance, total time, walk count
+- [ ] Shows 5 most recent walks with links to detail
+- [ ] Stats match sum of completed walks in database
+
+---
+
+### US-4.2 Walk history (P0)
+
+**As a** user  
+**I want to** browse all my past walks  
+**So that** I can revisit any route
+
+**Acceptance criteria:**
+
+- [ ] Paginated list (20 per page)
+- [ ] Sorted by date descending
+- [ ] Each row links to walk detail
+- [ ] Empty state when no walks
+
+---
+
+### US-4.3 Profile page (P1)
+
+**As a** user  
+**I want a** profile page with my stats  
+**So that** I can share my progress
+
+**Acceptance criteria:**
+
+- [ ] Username and member-since date
+- [ ] Same aggregate stats as dashboard
+
+---
+
+## Epic 5: Leaderboard
+
+### US-5.1 Distance leaderboard (P0)
+
+**As a** competitive walker  
+**I want to** see how I rank against others by total distance  
+**So that** I stay motivated to walk more
+
+**Acceptance criteria:**
+
+- [ ] Ranked list: rank, username, total distance, walk count
+- [ ] Paginated (50 per page)
+- [ ] Current user's rank shown even if not on current page
+- [ ] Only COMPLETED walks count toward total
+
+---
+
+## Epic 6: Territory system (Phase 2)
+
+### US-6.1 Closed-loop detection (P2)
+
+**As a** walker  
+**I want** the system to detect when I complete a loop  
+**So that** I can claim territory
+
+**Acceptance criteria:**
+
+- [ ] On walk end, `fn_detect_closed_loop` runs
+- [ ] Start/end within 25 m and perimeter ≥ 100 m
+- [ ] Minimum 3 points for polygon
+
+*Pattern: Survey_Map `ensureClosedPolygon` + server `fn_get_polygon_area`*
+
+---
+
+### US-6.2 Territory creation (P2)
+
+**As a** walker  
+**I want** my closed loop to become owned territory  
+**So that** I control that area on the map
+
+**Acceptance criteria:**
+
+- [ ] `fn_create_territory_polygon` builds POLYGON from walk points
+- [ ] `area_sq_meters` stored via `ST_Area(geography)`
+- [ ] Territory linked to user and walk
+- [ ] Notification/modal on walk end when territory created
+
+---
+
+### US-6.3 Territory map view (P2)
+
+**As a** user  
+**I want to** see territories on the map  
+**So that** I understand the game world
+
+**Acceptance criteria:**
+
+- [ ] Territories rendered as filled polygons
+- [ ] Tooltip: owner username, area
+- [ ] Viewport query by bounding box
+
+---
+
+### US-6.4 Area leaderboard (P2)
+
+**As a** competitive walker  
+**I want** a leaderboard by total territory area  
+**So that** loop walks have strategic value
+
+**Acceptance criteria:**
+
+- [ ] Rank users by sum of `area_sq_meters`
+- [ ] Separate tab on leaderboard page
+
+---
+
+## Epic 7: Non-functional
+
+### US-7.1 API performance (P0)
+
+**Acceptance criteria:**
+
+- [ ] List/history endpoints respond < 300 ms p95 with 10k walks in DB (indexed)
+- [ ] Point insert < 100 ms p95
+
+---
+
+### US-7.2 Input validation (P0)
+
+**Acceptance criteria:**
+
+- [ ] All API inputs validated with Bean Validation
+- [ ] SQL injection prevented (parameterized queries only)
+- [ ] Users cannot access other users' walks (403)
+
+---
+
+## Definition of Done (all P0 stories)
+
+- [ ] Code implemented per Backend-Spec / Frontend-Spec
+- [ ] Unit or integration test for happy path
+- [ ] API matches API-Spec.md
+- [ ] No critical linter/security issues
+- [ ] Manually verified in browser with GPS or mocked coordinates
+
+---
+
+## Test scenarios (GPS mocking for CI/dev)
+
+| Scenario | Points | Expected |
+|----------|--------|----------|
+| Short walk | 10 points along line | distance > 0, path LINESTRING |
+| Stationary | 5 identical points | distance ≈ 0 or rejected |
+| Square loop 100m | 4 corners + close | Phase 2: territory ~10000 sq m |
+| Open route | Start/end far apart | No territory |
+
+---
+
+## Story map by sprint (suggested)
+
+| Sprint | Stories |
+|--------|---------|
+| 1 | US-1.1–1.4, database migrations, project scaffold |
+| 2 | US-2.1–2.3, US-3.1–3.2 |
+| 3 | US-4.1–4.2, US-5.1 |
+| 4 | US-2.4, US-4.3, polish, US-7.x |
+| 5+ | US-6.x (Phase 2) |
+
+See **Spec-Driven-Development-Estimate.md** for hour estimates.
