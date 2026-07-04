@@ -45,13 +45,33 @@ export function useWalkTracker(position, geoError) {
     return () => clearInterval(interval);
   }, [status]);
 
+  const positionRef = useRef(position);
   useEffect(() => {
-    if (status !== 'active' || !position || !walkId) return undefined;
+    positionRef.current = position;
+  }, [position]);
+
+  const stateRef = useRef({ sequence, isAuthenticated, positions, walkId });
+  useEffect(() => {
+    stateRef.current = { sequence, isAuthenticated, positions, walkId };
+  }, [sequence, isAuthenticated, positions, walkId]);
+
+  useEffect(() => {
+    if (status !== 'active') return undefined;
 
     const interval = setInterval(async () => {
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
-      const accuracy = position.coords.accuracy;
+      const currentPos = positionRef.current;
+      if (!currentPos) return;
+
+      const lat = currentPos.coords.latitude;
+      const lng = currentPos.coords.longitude;
+      const accuracy = currentPos.coords.accuracy;
+
+      const {
+        sequence: currentSeq,
+        isAuthenticated: auth,
+        positions: currentPosList,
+        walkId: currentWalkId,
+      } = stateRef.current;
 
       if (lastSentRef.current) {
         const dist = haversineMeters(
@@ -60,16 +80,17 @@ export function useWalkTracker(position, geoError) {
           lat,
           lng,
         );
-        if (dist < 5) return;
+        // Record if user moves at least 1 meter (reduces GPS jitter cutoff from 5m to 1m)
+        if (dist < 1) return;
       }
 
-      const nextSeq = sequence + 1;
+      const nextSeq = currentSeq + 1;
       const pointTimestamp = new Date().toISOString();
 
-      if (isAuthenticated) {
+      if (auth) {
         try {
           await walkApi.addPoint({
-            walkId,
+            walkId: currentWalkId,
             latitude: lat,
             longitude: lng,
             timestamp: pointTimestamp,
@@ -86,11 +107,11 @@ export function useWalkTracker(position, geoError) {
         // Guest mode local recording
         setSequence(nextSeq);
         lastSentRef.current = { lat, lng };
-        const newPositions = [...positions, [lat, lng]];
+        const newPositions = [...currentPosList, [lat, lng]];
         setPositions(newPositions);
 
         localStorage.setItem('active_local_walk', JSON.stringify({
-          id: walkId,
+          id: currentWalkId,
           startTime: startTimeRef.current,
           sequence: nextSeq,
           positions: newPositions,
@@ -109,7 +130,7 @@ export function useWalkTracker(position, geoError) {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [status, position, walkId, sequence, isAuthenticated, positions]);
+  }, [status]);
 
   async function startWalk() {
     setError(null);

@@ -98,6 +98,10 @@ export default function ShareCard({ summary, onClose }) {
                 doubleClickZoom={false}
                 scrollWheelZoom={false}
                 attributionControl={false}
+                preferCanvas={true}
+                fadeAnimation={false}
+                zoomAnimation={false}
+                markerZoomAnimation={false}
                 style={{ height: '100%', width: '100%', zIndex: 0 }}
               >
                 <TileLayer

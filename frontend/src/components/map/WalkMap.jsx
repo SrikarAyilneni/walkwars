@@ -8,12 +8,14 @@ export default function WalkMap({ center = [12.9716, 77.5946], zoom = 15, childr
     <MapContainer
       center={center}
       zoom={zoom}
+      preferCanvas={true}
       className={`${className} z-0`}
       style={{ height: '100%', width: '100%' }}
     >
       <TileLayer
         attribution="&copy; OpenStreetMap contributors"
         url={OSM_URL}
+        crossOrigin="anonymous"
       />
       {children}
     </MapContainer>
