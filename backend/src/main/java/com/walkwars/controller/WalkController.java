@@ -1,8 +1,6 @@
 package com.walkwars.controller;
 
-import com.walkwars.dto.request.WalkEndRequest;
-import com.walkwars.dto.request.WalkPointRequest;
-import com.walkwars.dto.request.WalkStartRequest;
+import com.walkwars.dto.request.*;
 import com.walkwars.dto.response.*;
 import com.walkwars.entity.WalkStatus;
 import com.walkwars.entity.User;
@@ -48,6 +46,15 @@ public class WalkController {
         Long userId = authHelper.getCurrentUserId(auth);
         WalkSummaryResponse response = walkService.endWalk(userId, request);
         return ResponseEntity.ok(ApiResponse.success("Walk completed", response));
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<ApiResponse<WalkSummaryResponse>> importWalk(
+            @Valid @RequestBody WalkImportRequest request,
+            Authentication auth) {
+        User user = authHelper.getCurrentUser(auth);
+        WalkSummaryResponse response = walkService.importWalk(user, request);
+        return ResponseEntity.ok(ApiResponse.success("Walk imported", response));
     }
 
     @GetMapping

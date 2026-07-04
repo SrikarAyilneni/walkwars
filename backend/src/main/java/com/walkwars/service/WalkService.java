@@ -1,9 +1,7 @@
 package com.walkwars.service;
 
+import com.walkwars.dto.request.*;
 import com.walkwars.dto.response.*;
-import com.walkwars.dto.request.WalkEndRequest;
-import com.walkwars.dto.request.WalkPointRequest;
-import com.walkwars.dto.request.WalkStartRequest;
 import com.walkwars.entity.User;
 import com.walkwars.entity.Walk;
 import com.walkwars.entity.WalkPoint;
@@ -210,6 +208,35 @@ public class WalkService {
                         .timestamp(p.getTimestamp())
                         .build())
                 .toList();
+    }
+
+    @Transactional
+    public WalkSummaryResponse importWalk(User user, WalkImportRequest request) {
+        Walk walk = Walk.builder()
+                .user(user)
+                .startTime(request.getClientStartedAt())
+                .status(WalkStatus.ACTIVE)
+                .build();
+        walk = walkRepository.save(walk);
+
+        for (WalkPointImportItem point : request.getPoints()) {
+            if (point.getAccuracyMeters() != null && point.getAccuracyMeters() > 50) {
+                continue;
+            }
+            walkPointRepository.insertPoint(
+                    walk.getId(),
+                    point.getLatitude(),
+                    point.getLongitude(),
+                    point.getTimestamp(),
+                    point.getSequenceNumber()
+            );
+        }
+
+        WalkEndRequest endRequest = new WalkEndRequest();
+        endRequest.setWalkId(walk.getId());
+        endRequest.setClientEndedAt(request.getClientEndedAt());
+
+        return this.endWalk(user.getId(), endRequest);
     }
 
     private Walk findActiveWalkForUser(Long userId, Long walkId) {
