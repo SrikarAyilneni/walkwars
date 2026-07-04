@@ -7,4 +7,5 @@ export const walkApi = {
   list: (page = 0, size = 20) => client.get('/walks', { params: { page, size } }),
   get: (id) => client.get(`/walks/${id}`),
   getPoints: (id) => client.get(`/walks/${id}/points`),
+  import: (body) => client.post('/walks/import', body),
 };

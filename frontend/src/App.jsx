@@ -16,12 +16,12 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<WalkTrackingPage />} />
+          <Route path="/walk" element={<WalkTrackingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/walk" element={<WalkTrackingPage />} />
             <Route path="/walks" element={<WalkHistoryPage />} />
             <Route path="/walks/:id" element={<WalkDetailPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
