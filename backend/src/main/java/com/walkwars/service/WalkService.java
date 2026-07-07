@@ -212,6 +212,13 @@ public class WalkService {
 
     @Transactional
     public WalkSummaryResponse importWalk(User user, WalkImportRequest request) {
+        // Delete any existing active walk for this user to avoid unique constraint violations
+        walkRepository.findByUserIdAndStatus(user.getId(), WalkStatus.ACTIVE)
+                .ifPresent(w -> {
+                    walkRepository.delete(w);
+                    walkRepository.flush(); // Force Hibernate to execute SQL DELETE before executing subsequent SQL INSERT
+                });
+
         Walk walk = Walk.builder()
                 .user(user)
                 .startTime(request.getClientStartedAt())

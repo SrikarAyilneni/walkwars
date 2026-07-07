@@ -122,7 +122,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <div className="mt-6 grid gap-4 sm:grid-cols-4">
           <div className="rounded-xl bg-slate-900 p-6 border border-slate-850">
             <p className="text-sm text-slate-450">Total Distance</p>
             <p className="text-2xl font-black text-orange-500 mt-1">
@@ -133,6 +133,12 @@ export default function DashboardPage() {
             <p className="text-sm text-slate-455">Total Time</p>
             <p className="text-2xl font-black text-orange-500 mt-1">
               {formatDuration(stats?.totalDurationSeconds)}
+            </p>
+          </div>
+          <div className="rounded-xl bg-slate-900 p-6 border border-slate-850">
+            <p className="text-sm text-slate-455">Total Steps</p>
+            <p className="text-2xl font-black text-orange-500 mt-1">
+              {Math.round((stats?.totalDistanceMeters || 0) / 0.75).toLocaleString()}
             </p>
           </div>
           <div className="rounded-xl bg-slate-900 p-6 border border-slate-850">

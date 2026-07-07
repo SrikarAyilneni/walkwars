@@ -143,6 +143,32 @@ export default function WalkTrackingPage() {
           </p>
         )}
 
+        <div className="mt-4 flex justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              setCompletedWalk({
+                id: 'test-mock-walk-123',
+                distanceMeters: 2340,
+                durationSeconds: 1120,
+                positions: [
+                  [17.3850, 78.4867],
+                  [17.3890, 78.4897],
+                  [17.3910, 78.4917],
+                  [17.3940, 78.4927],
+                  [17.3850, 78.4867] // closed loop to trigger badges
+                ],
+                territoryCreated: true,
+                isGuest: true
+              });
+              setShowShare(true);
+            }}
+            className="text-xs px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-850 hover:border-slate-700 transition"
+          >
+            🧪 Test Share Card (Mock Walk)
+          </button>
+        </div>
+
         {completedWalk && !isAuthenticated && (
           <div className="mt-6 rounded-xl bg-orange-500/10 p-6 border border-orange-500/20 text-center flex flex-col items-center gap-4">
             <div>

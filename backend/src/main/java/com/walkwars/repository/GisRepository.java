@@ -15,7 +15,7 @@ public class GisRepository {
 
     public WalkPathResult buildWalkPath(Long walkId) {
         Object[] row = (Object[]) entityManager.createNativeQuery(
-                "SELECT path_geom::text, distance_m FROM fn_build_walk_path(:walkId)")
+                "SELECT ST_AsText(path_geom), distance_m FROM fn_build_walk_path(:walkId)")
                 .setParameter("walkId", walkId)
                 .getSingleResult();
         return new WalkPathResult((String) row[0], (BigDecimal) row[1]);
@@ -68,7 +68,7 @@ public class GisRepository {
 
     public TerritoryPolygonResult createTerritoryPolygon(Long walkId) {
         Object[] row = (Object[]) entityManager.createNativeQuery(
-                "SELECT polygon_geom::text, area_sq_m FROM fn_create_territory_polygon(:walkId)")
+                "SELECT ST_AsText(polygon_geom), area_sq_m FROM fn_create_territory_polygon(:walkId)")
                 .setParameter("walkId", walkId)
                 .getSingleResult();
         return new TerritoryPolygonResult((String) row[0], (BigDecimal) row[1]);

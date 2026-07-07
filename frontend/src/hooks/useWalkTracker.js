@@ -3,6 +3,9 @@ import { useAuth } from '../context/AuthContext';
 import { walkApi } from '../api/walkApi';
 import { haversineMeters, haversineTotal } from '../utils/haversine';
 
+// 1-second silent WAV audio data URI to keep the JS thread alive in the background
+const SILENT_AUDIO = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+
 export function useWalkTracker(position, geoError) {
   const { isAuthenticated } = useAuth();
   const [walkId, setWalkId] = useState(null);
@@ -13,6 +16,92 @@ export function useWalkTracker(position, geoError) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const startTimeRef = useRef(null);
   const lastSentRef = useRef(null);
+  const audioRef = useRef(null);
+  const wakeLockRef = useRef(null);
+
+  // Initialize the silent audio object on mount
+  useEffect(() => {
+    audioRef.current = new Audio(SILENT_AUDIO);
+    audioRef.current.loop = true;
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release().catch(() => {});
+      }
+    };
+  }, []);
+
+  const startBackgroundServices = async () => {
+    // 1. Play silent audio (keeps background process alive on screen lock)
+    if (audioRef.current) {
+      try {
+        await audioRef.current.play();
+        console.log('Background audio tracking started');
+      } catch (err) {
+        console.warn('Audio play failed (waiting for user interaction):', err);
+      }
+    }
+
+    // 2. Request Screen Wake Lock (stops screen from locking automatically)
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
+        console.log('Screen Wake Lock acquired');
+      } catch (err) {
+        console.warn('Failed to acquire Screen Wake Lock:', err);
+      }
+    }
+  };
+
+  const stopBackgroundServices = async () => {
+    // 1. Stop audio playback
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+
+    // 2. Release Screen Wake Lock
+    if (wakeLockRef.current) {
+      try {
+        await wakeLockRef.current.release();
+        wakeLockRef.current = null;
+        console.log('Screen Wake Lock released');
+      } catch (err) {
+        console.error('Failed to release Wake Lock:', err);
+      }
+    }
+  };
+
+  // Automatically manage background services on status updates
+  useEffect(() => {
+    if (status === 'active') {
+      startBackgroundServices();
+    } else if (status === 'idle') {
+      stopBackgroundServices();
+    }
+  }, [status]);
+
+  // Re-acquire Wake Lock when the tab becomes visible again
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (status === 'active' && document.visibilityState === 'visible' && 'wakeLock' in navigator) {
+        try {
+          wakeLockRef.current = await navigator.wakeLock.request('screen');
+          console.log('Screen Wake Lock re-acquired on visibility change');
+        } catch (err) {
+          console.warn('Failed to re-acquire Wake Lock:', err);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [status]);
 
   // Restore active local walk on mount for guests
   useEffect(() => {
