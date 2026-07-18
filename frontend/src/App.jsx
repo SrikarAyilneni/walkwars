@@ -12,8 +12,9 @@ import LeaderboardPage from './pages/LeaderboardPage';
 import ProfilePage from './pages/ProfilePage';
 
 export default function App() {
+  const basename = import.meta.env.MODE === 'production' ? '/walkwars' : '';
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <AuthProvider>
         <Routes>
           <Route path="/" element={<WalkTrackingPage />} />

@@ -19,4 +19,5 @@ public class WalkSummaryResponse {
     private int pointCount;
     private Map<String, Object> pathGeoJson;
     private boolean territoryCreated;
+    private Integer caloriesBurnt;
 }

@@ -17,4 +17,5 @@ public class WalkListItemResponse {
     private BigDecimal distanceMeters;
     private Integer durationSeconds;
     private WalkStatus status;
+    private Integer caloriesBurnt;
 }

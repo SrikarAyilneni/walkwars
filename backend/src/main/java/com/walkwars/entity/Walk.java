@@ -37,6 +37,9 @@ public class Walk {
     @Column(name = "duration_seconds")
     private Integer durationSeconds;
 
+    @Column(name = "calories_burnt")
+    private Integer caloriesBurnt;
+
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(nullable = false, columnDefinition = "walk_status")

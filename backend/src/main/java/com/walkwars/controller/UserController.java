@@ -30,4 +30,12 @@ public class UserController {
         Long userId = authHelper.getCurrentUserId(auth);
         return ResponseEntity.ok(ApiResponse.success(userService.getProfile(userId)));
     }
+
+    @org.springframework.web.bind.annotation.PutMapping("/profile")
+    public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
+            Authentication auth,
+            @org.springframework.web.bind.annotation.RequestBody com.walkwars.dto.request.UpdateProfileRequest request) {
+        Long userId = authHelper.getCurrentUserId(auth);
+        return ResponseEntity.ok(ApiResponse.success(userService.updateProfile(userId, request)));
+    }
 }

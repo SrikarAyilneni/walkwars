@@ -51,6 +51,7 @@ export default function WalkTrackingPage() {
     error,
     elapsedSeconds,
     liveDistance,
+    liveCalories,
     startWalk,
     endWalk,
   } = useWalkTracker(position, geoError);
@@ -127,6 +128,7 @@ export default function WalkTrackingPage() {
           <WalkStats
             distance={liveDistance}
             duration={elapsedSeconds}
+            calories={liveCalories}
             label={status === 'active' ? 'Live' : 'Ready'}
           />
           <WalkControls

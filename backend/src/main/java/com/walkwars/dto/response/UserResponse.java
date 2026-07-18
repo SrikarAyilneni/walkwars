@@ -13,4 +13,10 @@ public class UserResponse {
     private String username;
     private String email;
     private Instant createdAt;
+    private Integer heightCm;
+    private Integer weightKg;
+    private Integer age;
+    private Integer streakCount;
+    private Integer dailyStepGoal;
+    private Integer dailyCalorieGoal;
 }

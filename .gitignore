@@ -20,3 +20,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Production VPS Credentials
+.vps.env
+
+# Nested local portfolio repo
+freelogic/

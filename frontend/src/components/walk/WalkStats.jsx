@@ -1,6 +1,6 @@
 import { formatDistance, formatDuration } from '../../utils/formatters';
 
-export default function WalkStats({ distance, duration, label = 'Live' }) {
+export default function WalkStats({ distance, duration, calories = 0, label = 'Live' }) {
   const isLive = label === 'Live';
 
   return (
@@ -38,6 +38,16 @@ export default function WalkStats({ distance, duration, label = 'Live' }) {
         </span>
         <span className="font-mono text-white text-base">
           {Math.round(distance / 0.75).toLocaleString()}
+        </span>
+      </div>
+
+      {/* Calories Stat */}
+      <div className="flex items-center gap-2 bg-slate-950/60 px-4 py-2.5 rounded-xl border border-slate-800/60 shadow-inner">
+        <span className="text-orange-500 tracking-wide uppercase text-xs font-black">
+          Calories
+        </span>
+        <span className="font-mono text-white text-base">
+          {calories} kcal
         </span>
       </div>
     </div>

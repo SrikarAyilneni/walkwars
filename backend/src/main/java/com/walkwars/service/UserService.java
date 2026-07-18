@@ -22,24 +22,67 @@ public class UserService {
     public UserResponse getMe(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "User not found"));
-        return UserResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .createdAt(user.getCreatedAt())
-                .build();
+        checkAndResetStreak(user);
+        return mapToUserResponse(user);
     }
 
     public UserProfileResponse getProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "User not found"));
+        checkAndResetStreak(user);
 
         return UserProfileResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .memberSince(user.getCreatedAt())
+                .heightCm(user.getHeightCm())
+                .weightKg(user.getWeightKg())
+                .age(user.getAge())
+                .streakCount(user.getStreakCount())
+                .dailyStepGoal(user.getDailyStepGoal())
+                .dailyCalorieGoal(user.getDailyCalorieGoal())
                 .stats(getStats(userId))
                 .build();
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public UserResponse updateProfile(Long userId, com.walkwars.dto.request.UpdateProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("NOT_FOUND", "User not found"));
+
+        if (request.getHeightCm() != null) user.setHeightCm(request.getHeightCm());
+        if (request.getWeightKg() != null) user.setWeightKg(request.getWeightKg());
+        if (request.getAge() != null) user.setAge(request.getAge());
+        if (request.getDailyStepGoal() != null) user.setDailyStepGoal(request.getDailyStepGoal());
+        if (request.getDailyCalorieGoal() != null) user.setDailyCalorieGoal(request.getDailyCalorieGoal());
+
+        user = userRepository.save(user);
+        return mapToUserResponse(user);
+    }
+
+    private UserResponse mapToUserResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .createdAt(user.getCreatedAt())
+                .heightCm(user.getHeightCm())
+                .weightKg(user.getWeightKg())
+                .age(user.getAge())
+                .streakCount(user.getStreakCount())
+                .dailyStepGoal(user.getDailyStepGoal())
+                .dailyCalorieGoal(user.getDailyCalorieGoal())
+                .build();
+    }
+
+    private void checkAndResetStreak(User user) {
+        if (user.getLastWalkDate() != null) {
+            java.time.LocalDate today = java.time.LocalDate.now(java.time.ZoneOffset.UTC);
+            if (!user.getLastWalkDate().equals(today) && !user.getLastWalkDate().plusDays(1).equals(today)) {
+                user.setStreakCount(0);
+                userRepository.save(user);
+            }
+        }
     }
 
     public UserStatsResponse getStats(Long userId) {

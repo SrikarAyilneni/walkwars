@@ -87,11 +87,46 @@ export default function DashboardPage() {
 
   const stats = profile?.stats;
 
+  const getTodayTotals = () => {
+    const todayStr = new Date().toDateString();
+    let steps = 0;
+    let calories = 0;
+
+    recentWalks.forEach(w => {
+      if (new Date(w.startTime).toDateString() === todayStr) {
+        steps += Math.round(w.distanceMeters / 0.75);
+        calories += (w.caloriesBurnt || 0);
+      }
+    });
+
+    return { steps, calories };
+  };
+
+  const todayTotals = getTodayTotals();
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <Navbar />
       <main className="mx-auto max-w-6xl px-4 py-8">
-        <h1 className="text-2xl font-bold text-white tracking-tight">Dashboard</h1>
+        
+        {/* Dashboard Welcome Header with Streak */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-850 pb-5">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-white">Dashboard</h1>
+            <p className="text-sm text-slate-400 mt-1">Welcome back, {profile?.username || 'Walker'}!</p>
+          </div>
+          {profile?.streakCount !== undefined && profile.streakCount > 0 ? (
+            <div className="flex items-center gap-2 self-start bg-orange-500/10 border border-orange-500/25 text-orange-500 font-extrabold px-4 py-2.5 rounded-full text-sm animate-pulse shadow-lg shadow-orange-500/5">
+              <span>🔥</span>
+              <span>{profile.streakCount} Day Streak</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 self-start bg-slate-800 border border-slate-700 text-slate-400 font-bold px-4 py-2.5 rounded-full text-sm">
+              <span>❄️</span>
+              <span>No Active Streak</span>
+            </div>
+          )}
+        </div>
 
         {pendingWalk && (
           <div className="mt-4 rounded-xl bg-orange-500/10 border border-orange-500/20 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -121,6 +156,63 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        {/* Daily Goals Progress section */}
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
+          {/* Steps Goal Progress */}
+          <div className="rounded-2xl bg-slate-900 p-6 border border-slate-850 shadow-xl">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-450">Today's Steps Goal</p>
+                <p className="text-2xl font-black text-white mt-1">
+                  {todayTotals.steps.toLocaleString()} <span className="text-sm font-medium text-slate-400">/ {(profile?.dailyStepGoal || 10000).toLocaleString()} steps</span>
+                </p>
+              </div>
+              {todayTotals.steps >= (profile?.dailyStepGoal || 10000) ? (
+                <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-xs font-extrabold px-2.5 py-1 rounded-full animate-bounce">
+                  🎉 HITTED!
+                </span>
+              ) : (
+                <span className="text-xs font-bold text-slate-500">
+                  {Math.round((todayTotals.steps / (profile?.dailyStepGoal || 10000)) * 100)}% done
+                </span>
+              )}
+            </div>
+            <div className="w-full bg-slate-950 rounded-full h-3 mt-4 border border-slate-800 overflow-hidden">
+              <div 
+                className="bg-gradient-to-r from-orange-600 to-orange-400 h-full rounded-full transition-all duration-500" 
+                style={{ width: `${Math.min(100, (todayTotals.steps / (profile?.dailyStepGoal || 10000)) * 100)}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Calories Goal Progress */}
+          <div className="rounded-2xl bg-slate-900 p-6 border border-slate-850 shadow-xl">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-450">Today's Calorie Goal</p>
+                <p className="text-2xl font-black text-white mt-1">
+                  {todayTotals.calories} <span className="text-sm font-medium text-slate-400">/ {profile?.dailyCalorieGoal || 300} kcal</span>
+                </p>
+              </div>
+              {todayTotals.calories >= (profile?.dailyCalorieGoal || 300) ? (
+                <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-xs font-extrabold px-2.5 py-1 rounded-full animate-bounce">
+                  🔥 BURNED!
+                </span>
+              ) : (
+                <span className="text-xs font-bold text-slate-500">
+                  {Math.round((todayTotals.calories / (profile?.dailyCalorieGoal || 300)) * 100)}% done
+                </span>
+              )}
+            </div>
+            <div className="w-full bg-slate-950 rounded-full h-3 mt-4 border border-slate-800 overflow-hidden">
+              <div 
+                className="bg-gradient-to-r from-red-600 to-red-400 h-full rounded-full transition-all duration-500" 
+                style={{ width: `${Math.min(100, (todayTotals.calories / (profile?.dailyCalorieGoal || 300)) * 100)}%` }}
+              />
+            </div>
+          </div>
+        </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-4">
           <div className="rounded-xl bg-slate-900 p-6 border border-slate-850">
@@ -161,6 +253,7 @@ export default function DashboardPage() {
                   <th className="py-2">Date</th>
                   <th className="py-2">Distance</th>
                   <th className="py-2">Duration</th>
+                  <th className="py-2">Calories</th>
                   <th className="py-2"></th>
                 </tr>
               </thead>
@@ -170,6 +263,7 @@ export default function DashboardPage() {
                     <td className="py-2 text-slate-300">{formatDate(walk.startTime)}</td>
                     <td className="py-2 font-semibold text-white">{formatDistance(walk.distanceMeters)}</td>
                     <td className="py-2 text-slate-350">{formatDuration(walk.durationSeconds)}</td>
+                    <td className="py-2 text-slate-350">{walk.caloriesBurnt ?? 0} kcal</td>
                     <td className="py-2 text-right">
                       <Link to={`/walks/${walk.id}`} className="text-orange-500 hover:underline">View</Link>
                     </td>

@@ -74,7 +74,7 @@ export default function WalkDetailPage() {
           </button>
         </div>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-4">
+        <div className="mt-4 grid gap-4 sm:grid-cols-5">
           <div className="rounded-xl bg-slate-900 p-5 border border-slate-850">
             <p className="text-sm text-slate-450">Date</p>
             <p className="font-semibold text-white mt-1">{formatDate(walk.startTime)}</p>
@@ -91,6 +91,12 @@ export default function WalkDetailPage() {
             <p className="text-sm text-slate-450">Steps</p>
             <p className="font-semibold text-white mt-1">
               {Math.round(walk.distanceMeters / 0.75).toLocaleString()}
+            </p>
+          </div>
+          <div className="rounded-xl bg-slate-900 p-5 border border-slate-850">
+            <p className="text-sm text-slate-450">Calories Burnt</p>
+            <p className="font-semibold text-white mt-1">
+              {walk.caloriesBurnt ?? 0} kcal
             </p>
           </div>
         </div>

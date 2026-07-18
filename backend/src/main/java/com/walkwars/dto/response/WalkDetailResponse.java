@@ -21,4 +21,5 @@ public class WalkDetailResponse {
     private WalkStatus status;
     private Map<String, Object> pathGeoJson;
     private BoundsResponse bounds;
+    private Integer caloriesBurnt;
 }

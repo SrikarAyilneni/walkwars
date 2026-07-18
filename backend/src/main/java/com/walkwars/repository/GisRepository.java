@@ -30,13 +30,14 @@ public class GisRepository {
     }
 
     public void updateWalkPath(Long walkId, String pathWkt, BigDecimal distanceMeters,
-                               int durationSeconds, Instant endTime) {
+                               int durationSeconds, Instant endTime, Integer caloriesBurnt) {
         entityManager.createNativeQuery("""
                 UPDATE walks SET
                     path = ST_GeomFromText(:pathWkt, 4326),
                     distance_meters = :distance,
                     duration_seconds = :duration,
                     end_time = :endTime,
+                    calories_burnt = :caloriesBurnt,
                     status = 'COMPLETED'
                 WHERE id = :walkId AND status = 'ACTIVE'
                 """)
@@ -44,6 +45,7 @@ public class GisRepository {
                 .setParameter("distance", distanceMeters)
                 .setParameter("duration", durationSeconds)
                 .setParameter("endTime", endTime)
+                .setParameter("caloriesBurnt", caloriesBurnt)
                 .setParameter("walkId", walkId)
                 .executeUpdate();
     }

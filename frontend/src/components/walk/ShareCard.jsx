@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Polyline, useMap } from 'react-leaflet';
 import html2canvas from 'html2canvas';
 import 'leaflet/dist/leaflet.css';
+import { useAuth } from '../../context/AuthContext';
 
 // Local FitBounds component to adjust the static map to the walk path
 function FitBounds({ positions }) {
@@ -15,6 +16,7 @@ function FitBounds({ positions }) {
 }
 
 export default function ShareCard({ summary, onClose }) {
+  const { user } = useAuth();
   const cardRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
 
@@ -268,6 +270,16 @@ export default function ShareCard({ summary, onClose }) {
               <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500">Steps</span>
               <p className="text-2xl font-black text-white mt-1">{steps.toLocaleString()}</p>
               <span className="text-[9px] text-slate-400 mt-0.5 font-medium">steps</span>
+            </div>
+            <div className="bg-slate-950/50 p-3 rounded-xl border border-slate-800/40 flex flex-col justify-between">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500">Calories</span>
+              <p className="text-2xl font-black text-white mt-1">{summary.caloriesBurnt ?? 0}</p>
+              <span className="text-[9px] text-slate-400 mt-0.5 font-medium">kcal</span>
+            </div>
+            <div className="bg-slate-950/50 p-3 rounded-xl border border-slate-800/40 flex flex-col justify-between">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500">Streak</span>
+              <p className="text-2xl font-black text-white mt-1">{user?.streakCount ?? 0}</p>
+              <span className="text-[9px] text-slate-400 mt-0.5 font-medium">days</span>
             </div>
           </div>
 

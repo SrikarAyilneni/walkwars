@@ -42,6 +42,7 @@ export default function WalkHistoryPage() {
                 <th className="px-4 py-3">Date</th>
                 <th className="px-4 py-3">Distance</th>
                 <th className="px-4 py-3">Duration</th>
+                <th className="px-4 py-3">Calories</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -51,6 +52,7 @@ export default function WalkHistoryPage() {
                   <td className="px-4 py-3">{formatDate(walk.startTime)}</td>
                   <td className="px-4 py-3">{formatDistance(walk.distanceMeters)}</td>
                   <td className="px-4 py-3">{formatDuration(walk.durationSeconds)}</td>
+                  <td className="px-4 py-3">{walk.caloriesBurnt ?? 0} kcal</td>
                   <td className="px-4 py-3">
                     <Link to={`/walks/${walk.id}`} className="text-blue-600 hover:underline">View</Link>
                   </td>

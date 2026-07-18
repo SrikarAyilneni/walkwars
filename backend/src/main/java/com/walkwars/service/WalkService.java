@@ -9,6 +9,7 @@ import com.walkwars.entity.WalkStatus;
 import com.walkwars.exception.BusinessException;
 import com.walkwars.config.WalkwarsProperties;
 import com.walkwars.repository.GisRepository;
+import com.walkwars.repository.UserRepository;
 import com.walkwars.repository.WalkPointRepository;
 import com.walkwars.repository.WalkRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class WalkService {
 
     private final WalkRepository walkRepository;
     private final WalkPointRepository walkPointRepository;
+    private final UserRepository userRepository;
     private final GisRepository gisRepository;
     private final GisService gisService;
     private final TerritoryService territoryService;
@@ -107,13 +109,53 @@ public class WalkService {
         Instant endTime = request.getClientEndedAt() != null ? request.getClientEndedAt() : Instant.now();
         int durationSeconds = (int) (endTime.getEpochSecond() - walk.getStartTime().getEpochSecond());
 
+        // Calculate speed in km/h
+        double speedKmh = 0.0;
+        if (durationSeconds > 0) {
+            speedKmh = (pathResult.distanceM().doubleValue() / 1000.0) / (durationSeconds / 3600.0);
+        }
+
+        // Map speed to MET (Metabolic Equivalent of Task)
+        double met = 3.5;
+        if (speedKmh < 3.2) {
+            met = 2.0;
+        } else if (speedKmh < 4.5) {
+            met = 3.0;
+        } else if (speedKmh < 5.6) {
+            met = 3.5;
+        } else if (speedKmh < 6.4) {
+            met = 4.3;
+        } else {
+            met = 5.0;
+        }
+
+        // Get user weight. Default to 70kg
+        int weightKg = 70;
+        User user = walk.getUser();
+        if (user.getWeightKg() != null && user.getWeightKg() > 0) {
+            weightKg = user.getWeightKg();
+        }
+
+        // Calculate calories burnt
+        int caloriesBurnt = (int) Math.round(met * weightKg * (durationSeconds / 3600.0));
+
         gisRepository.updateWalkPath(
                 walk.getId(),
                 pathResult.pathWkt(),
                 pathResult.distanceM(),
                 durationSeconds,
-                endTime
+                endTime,
+                caloriesBurnt
         );
+
+        // Update user daily walk streak if walk matches threshold
+        // Threshold: distance >= 500m OR duration >= 5 minutes (300 seconds)
+        boolean meetsStreakThreshold = pathResult.distanceM().compareTo(BigDecimal.valueOf(500)) >= 0
+                || durationSeconds >= 300;
+
+        if (meetsStreakThreshold) {
+            updateUserStreak(user);
+        }
 
         boolean territoryCreated = false;
         if (gisRepository.detectClosedLoop(walk.getId())) {
@@ -134,7 +176,27 @@ public class WalkService {
                 .pointCount(pointCount)
                 .pathGeoJson(pathGeoJson)
                 .territoryCreated(territoryCreated)
+                .caloriesBurnt(caloriesBurnt)
                 .build();
+    }
+
+    private void updateUserStreak(User user) {
+        java.time.LocalDate today = java.time.LocalDate.now(java.time.ZoneOffset.UTC);
+        java.time.LocalDate lastWalkDate = user.getLastWalkDate();
+
+        if (lastWalkDate == null) {
+            user.setStreakCount(1);
+            user.setLastWalkDate(today);
+        } else if (lastWalkDate.equals(today)) {
+            // Already walked today, streak remains unchanged
+        } else if (lastWalkDate.plusDays(1).equals(today)) {
+            user.setStreakCount(user.getStreakCount() + 1);
+            user.setLastWalkDate(today);
+        } else {
+            user.setStreakCount(1);
+            user.setLastWalkDate(today);
+        }
+        userRepository.save(user);
     }
 
     public PageResponse<WalkListItemResponse> listWalks(Long userId, int page, int size, WalkStatus status) {
@@ -190,6 +252,7 @@ public class WalkService {
                 .status(walk.getStatus())
                 .pathGeoJson(pathGeoJson)
                 .bounds(bounds)
+                .caloriesBurnt(walk.getCaloriesBurnt())
                 .build();
     }
 
@@ -264,6 +327,7 @@ public class WalkService {
                 .distanceMeters(walk.getDistanceMeters())
                 .durationSeconds(walk.getDurationSeconds())
                 .status(walk.getStatus())
+                .caloriesBurnt(walk.getCaloriesBurnt())
                 .build();
     }
 }

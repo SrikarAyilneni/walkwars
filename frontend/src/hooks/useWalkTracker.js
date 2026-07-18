@@ -7,7 +7,7 @@ import { haversineMeters, haversineTotal } from '../utils/haversine';
 const SILENT_AUDIO = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
 
 export function useWalkTracker(position, geoError) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [walkId, setWalkId] = useState(null);
   const [positions, setPositions] = useState([]);
   const [sequence, setSequence] = useState(0);
@@ -336,6 +336,17 @@ export function useWalkTracker(position, geoError) {
 
       const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
+      const speedKmh = duration > 0 ? (totalDist / 1000) / (duration / 3600) : 0;
+      let met = 3.5;
+      if (speedKmh < 3.2) met = 2.0;
+      else if (speedKmh < 4.5) met = 3.0;
+      else if (speedKmh < 5.6) met = 3.5;
+      else if (speedKmh < 6.4) met = 4.3;
+      else met = 5.0;
+
+      const weight = user?.weightKg || 70;
+      const caloriesBurnt = Math.round(met * weight * (duration / 3600));
+
       const localSummary = {
         clientStartedAt: new Date(startTimeRef.current).toISOString(),
         clientEndedAt,
@@ -345,6 +356,7 @@ export function useWalkTracker(position, geoError) {
         points,
         positions,
         isGuest: true,
+        caloriesBurnt,
       };
 
       localStorage.setItem('pending_walk', JSON.stringify(localSummary));
@@ -360,6 +372,20 @@ export function useWalkTracker(position, geoError) {
     }
   }
 
+  const getLiveCalories = () => {
+    if (elapsedSeconds <= 0) return 0;
+    const totalDist = haversineTotal(positions);
+    const speedKmh = elapsedSeconds > 0 ? (totalDist / 1000) / (elapsedSeconds / 3600) : 0;
+    let met = 3.5;
+    if (speedKmh < 3.2) met = 2.0;
+    else if (speedKmh < 4.5) met = 3.0;
+    else if (speedKmh < 5.6) met = 3.5;
+    else if (speedKmh < 6.4) met = 4.3;
+    else met = 5.0;
+    const weight = user?.weightKg || 70;
+    return Math.round(met * weight * (elapsedSeconds / 3600));
+  };
+
   return {
     status,
     walkId,
@@ -367,6 +393,7 @@ export function useWalkTracker(position, geoError) {
     error: error || geoError,
     elapsedSeconds,
     liveDistance: haversineTotal(positions),
+    liveCalories: getLiveCalories(),
     startWalk,
     endWalk,
   };

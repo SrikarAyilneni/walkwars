@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: walkwars-db-prod
+    environment:
+      POSTGRES_DB: walkwars
+      POSTGRES_USER: walkwars
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - walkwars_pgdata_prod:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5433:5432" # Localhost only for security
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U walkwars"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: walkwars-backend-prod
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080" # Localhost only; proxy via Nginx
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/walkwars
+      SPRING_DATASOURCE_USERNAME: walkwars
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      WALKWARS_CORS_ALLOWED_ORIGINS: https://freelogic.in,http://freelogic.in,https://www.freelogic.in
+      WALKWARS_JWT_SECRET: ${JWT_SECRET}
+    restart: unless-stopped
+
+volumes:
+  walkwars_pgdata_prod:
