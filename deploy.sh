@@ -60,6 +60,11 @@ sshpass -p "$VPS_PASS" ssh -o StrictHostKeyChecking=no "$VPS_USER@$VPS_IP" << 'E
     ln -s /etc/nginx/sites-available/walkwars /etc/nginx/sites-enabled/
   fi
 
+  # Apply Let's Encrypt SSL configurations
+  echo "🔒 Setting up SSL certificates..."
+  sudo certbot --nginx -d freelogic.in -d www.freelogic.in --non-interactive --agree-tos -m freelogic.in@gmail.com
+  sudo certbot --nginx -d walkwars.in -d www.walkwars.in --non-interactive --agree-tos -m freelogic.in@gmail.com
+
   # Restart Nginx
   echo "🔄 Reloading Nginx service..."
   nginx -t
