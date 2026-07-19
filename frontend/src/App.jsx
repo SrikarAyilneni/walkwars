@@ -12,7 +12,7 @@ import LeaderboardPage from './pages/LeaderboardPage';
 import ProfilePage from './pages/ProfilePage';
 
 export default function App() {
-  const basename = import.meta.env.MODE === 'production' ? '/walkwars' : '';
+  const basename = window.location.pathname.startsWith('/walkwars') ? '/walkwars' : '';
   return (
     <BrowserRouter basename={basename}>
       <AuthProvider>
